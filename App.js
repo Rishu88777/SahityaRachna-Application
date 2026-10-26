@@ -15,6 +15,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { WebView } from 'react-native-webview';
 
 import ErrorBoundary from './src/ErrorBoundary';
+import { PERSIST_UI_JS } from './src/persistUi';
 import SplashOverlay from './src/SplashOverlay';
 import StatusScreen from './src/StatusScreen';
 import { COLORS, HIDDEN_SELECTORS, LOAD_TIMEOUT_MS, MIN_SPLASH_MS, SITE_HOST, SITE_URL } from './src/config';
@@ -237,7 +238,7 @@ function Main() {
             onHttpError={onHttpError}
             onRenderProcessGone={retry}
             onContentProcessDidTerminate={retry}
-            injectedJavaScriptBeforeContentLoaded={INJECTED_JS}
+            injectedJavaScriptBeforeContentLoaded={INJECTED_JS + PERSIST_UI_JS}
             javaScriptEnabled
             domStorageEnabled
             cacheEnabled

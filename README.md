@@ -29,3 +29,8 @@ eas build -p android --profile production   # produces an .aab for Play Store
 - Site URL, colours, splash duration, load timeout: `src/config.js`
 - App name, package id, version: `app.json`
 - Icons / splash artwork: `assets/`
+
+## Build the APK without a local machine
+GitHub → **Actions** → **Build Android APK** → **Run workflow** (pick the branch). When it finishes (~10 min),
+open the run and download the `sahitya-rachna-apk` artifact, unzip it and install the `.apk` on your phone.
+The APK is signed with the default debug key, which is fine for testing; use `eas build --profile production` for Play Store.

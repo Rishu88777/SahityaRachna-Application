@@ -15,6 +15,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import NetInfo from '@react-native-community/netinfo';
 import { WebView } from 'react-native-webview';
 
+import ErrorBoundary from './src/ErrorBoundary';
 import SplashOverlay from './src/SplashOverlay';
 import StatusScreen from './src/StatusScreen';
 import { COLORS, HIDDEN_SELECTORS, LOAD_TIMEOUT_MS, MIN_SPLASH_MS, SITE_HOST, SITE_URL } from './src/config';
@@ -36,13 +37,10 @@ const INJECTED_JS = `
 `;
 
 const isInternal = (url) => {
-  try {
-    const { protocol, hostname } = new URL(url);
-    if (protocol !== 'https:' && protocol !== 'http:') return false;
-    return hostname === SITE_HOST || hostname.endsWith('.' + SITE_HOST);
-  } catch {
-    return false;
-  }
+  const m = /^https?:\/\/([^/:?#]+)/i.exec(url || '');
+  if (!m) return false;
+  const host = m[1].toLowerCase();
+  return host === SITE_HOST || host.endsWith('.' + SITE_HOST);
 };
 
 // Other schemes (tel:, mailto:, whatsapp:, upi:, intent:) and other websites open outside the app.
@@ -117,14 +115,20 @@ function Main() {
 
   // Connectivity: show the offline screen right away, reload automatically on return.
   useEffect(() => {
-    return NetInfo.addEventListener((state) => {
-      const isOnline = state.isConnected !== false && state.isInternetReachable !== false;
-      const wasOnline = onlineRef.current;
-      onlineRef.current = isOnline;
-      setOnline(isOnline);
-      if (!isOnline) settleFirstLoad();
-      else if (!wasOnline && (errorRef.current || !hasLoaded.current)) retry();
-    });
+    let unsubscribe = () => {};
+    try {
+      unsubscribe = NetInfo.addEventListener((state) => {
+        const isOnline = state.isConnected !== false && state.isInternetReachable !== false;
+        const wasOnline = onlineRef.current;
+        onlineRef.current = isOnline;
+        setOnline(isOnline);
+        if (!isOnline) settleFirstLoad();
+        else if (!wasOnline && (errorRef.current || !hasLoaded.current)) retry();
+      });
+    } catch {
+      // Connectivity info is a nicety; the WebView's own error handling still works without it.
+    }
+    return unsubscribe;
   }, [retry, settleFirstLoad]);
 
   // Android hardware back: navigate web history, then press twice to exit.
@@ -251,9 +255,11 @@ function Main() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <Main />
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <Main />
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 

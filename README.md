@@ -9,7 +9,7 @@ A lightweight React Native (Expo) wrapper that opens https://sahityarachana.org 
 - Error handling: no connection, slow load (30 s timeout), server errors (5xx), WebView crash recovery
 - Thin top progress bar, pull-to-refresh, Android back button navigates web history (press twice to exit)
 - External links (`tel:`, `mailto:`, WhatsApp, UPI, other websites) open in the right app instead of inside the WebView
-- Small APK: R8 + resource shrinking, only `arm64-v8a` and `armeabi-v7a` ABIs, no extra UI libraries
+- Small APK: ABIs limited to `arm64-v8a`, `armeabi-v7a` and `x86_64`; code shrinking is off for stability, no extra UI libraries
 
 ## Run locally
 ```bash

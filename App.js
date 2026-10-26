@@ -244,7 +244,6 @@ function Main() {
             overScrollMode="never"
             textZoom={100}
             setBuiltInZoomControls={false}
-            decelerationRate="normal"
             startInLoadingState={false}
           />
           <Animated.View pointerEvents="none" style={[styles.barTrack, { opacity: barOpacity }]}>

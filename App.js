@@ -62,6 +62,7 @@ function Main() {
   const currentUrl = useRef(SITE_URL);
   const errorRef = useRef(null);
 
+  const [errorDetail, setErrorDetail] = useState('');
   const [error, setError] = useState(null); // null | 'offline' | 'timeout' | 'server' | 'generic'
   const [splashVisible, setSplashVisible] = useState(true);
   const [splashMounted, setSplashMounted] = useState(true);
@@ -96,9 +97,10 @@ function Main() {
   };
 
   const fail = useCallback(
-    (type) => {
+    (type, detail = '') => {
       clearTimeout(loadTimer.current);
       errorRef.current = type;
+      setErrorDetail(detail);
       setError(type);
       settleFirstLoad();
     },
@@ -195,6 +197,12 @@ function Main() {
   };
 
   const onShouldStart = (req) => {
+    // Plain-http links to our own site (Android blocks cleartext) are upgraded to https.
+    if (/^http:\/\//i.test(req.url) && isInternal(req.url)) {
+      const secure = req.url.replace(/^http:/i, 'https:');
+      webRef.current?.injectJavaScript(`window.location.replace(${JSON.stringify(secure)});true;`);
+      return false;
+    }
     if (isInternal(req.url) || req.url === 'about:blank') return true;
     // Sub-frames (embeds, payment iframes) are left alone; only top-level jumps leave the app.
     if (req.isTopFrame === false) return true;
@@ -236,7 +244,7 @@ function Main() {
             sharedCookiesEnabled
             thirdPartyCookiesEnabled
             setSupportMultipleWindows={false}
-            mixedContentMode="never"
+            mixedContentMode="compatibility"
             allowsInlineMediaPlayback
             mediaPlaybackRequiresUserAction
             pullToRefreshEnabled
@@ -254,7 +262,7 @@ function Main() {
               ]}
             />
           </Animated.View>
-          {showStatus && <StatusScreen type={showStatus} onRetry={retry} />}
+          {showStatus && <StatusScreen type={showStatus} detail={errorDetail} onRetry={retry} />}
         </View>
       </View>
       {splashMounted && <SplashOverlay visible={splashVisible} onHidden={() => setSplashMounted(false)} />}

@@ -14,3 +14,15 @@ export const COLORS = {
 export const LOAD_TIMEOUT_MS = 30000;
 // Minimum time the animated splash stays up so it never just flashes.
 export const MIN_SPLASH_MS = 1600;
+
+// Parts of the website hidden inside the app. Add your own selectors if the footer
+// uses an unusual class or id, e.g. '.my-custom-footer'.
+export const HIDDEN_SELECTORS = [
+  'footer',
+  '[role="contentinfo"]',
+  '#footer',
+  '.footer',
+  '.site-footer',
+  '.main-footer',
+  '#colophon',
+];

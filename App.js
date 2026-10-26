@@ -17,16 +17,20 @@ import { WebView } from 'react-native-webview';
 
 import SplashOverlay from './src/SplashOverlay';
 import StatusScreen from './src/StatusScreen';
-import { COLORS, LOAD_TIMEOUT_MS, MIN_SPLASH_MS, SITE_HOST, SITE_URL } from './src/config';
+import { COLORS, HIDDEN_SELECTORS, LOAD_TIMEOUT_MS, MIN_SPLASH_MS, SITE_HOST, SITE_URL } from './src/config';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Page-level tweaks so the site feels like an app: no grey tap flash, no rubber-band glow.
+// Runs before the page renders, so there is no flash of the footer; pure CSS also covers
+// content added later by single-page navigation.
 const INJECTED_JS = `
   (function () {
     var s = document.createElement('style');
-    s.textContent = '*{-webkit-tap-highlight-color:transparent;} html,body{overscroll-behavior-y:none;}';
-    document.head && document.head.appendChild(s);
+    s.textContent =
+      '*{-webkit-tap-highlight-color:transparent;} html,body{overscroll-behavior-y:none;}' +
+      ${JSON.stringify(HIDDEN_SELECTORS.join(',') + '{display:none !important;}')};
+    (document.head || document.documentElement).appendChild(s);
   })();
   true;
 `;
@@ -211,7 +215,7 @@ function Main() {
             onHttpError={onHttpError}
             onRenderProcessGone={retry}
             onContentProcessDidTerminate={retry}
-            injectedJavaScript={INJECTED_JS}
+            injectedJavaScriptBeforeContentLoaded={INJECTED_JS}
             javaScriptEnabled
             domStorageEnabled
             cacheEnabled

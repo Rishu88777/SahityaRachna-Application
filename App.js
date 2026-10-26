@@ -40,6 +40,10 @@ const INJECTED_JS = `
 const OFFLINE_RE =
   /INTERNET_DISCONNECTED|NAME_NOT_RESOLVED|NETWORK_CHANGED|CONNECTION_(REFUSED|RESET|CLOSED|TIMED_OUT)|ADDRESS_UNREACHABLE|not connected to the internet|offline/i;
 
+const SSL_RE = /SSL|CERT|SECURE/i;
+const classify = (description = '') =>
+  OFFLINE_RE.test(description) ? 'offline' : SSL_RE.test(description) ? 'ssl' : 'generic';
+
 const isInternal = (url) => {
   const m = /^https?:\/\/([^/:?#]+)/i.exec(url || '');
   if (!m) return false;
@@ -63,8 +67,7 @@ function Main() {
   const currentUrl = useRef(SITE_URL);
   const errorRef = useRef(null);
 
-  const [errorDetail, setErrorDetail] = useState('');
-  const [error, setError] = useState(null); // null | 'offline' | 'timeout' | 'server' | 'generic'
+  const [error, setError] = useState(null); // null | 'offline' | 'timeout' | 'server' | 'ssl' | 'generic'
   const [splashVisible, setSplashVisible] = useState(true);
   const [splashMounted, setSplashMounted] = useState(true);
   const [webKey, setWebKey] = useState(0);
@@ -98,10 +101,9 @@ function Main() {
   };
 
   const fail = useCallback(
-    (type, detail = '') => {
+    (type) => {
       clearTimeout(loadTimer.current);
       errorRef.current = type;
-      setErrorDetail(detail);
       setError(type);
       settleFirstLoad();
     },
@@ -233,9 +235,7 @@ function Main() {
             onLoadProgress={onLoadProgress}
             onLoad={onLoad}
             onLoadEnd={onLoadEnd}
-            onError={({ nativeEvent }) =>
-              fail(OFFLINE_RE.test(nativeEvent?.description || '') ? 'offline' : 'generic')
-            }
+            onError={({ nativeEvent }) => fail(classify(nativeEvent?.description))}
             onHttpError={onHttpError}
             onRenderProcessGone={retry}
             onContentProcessDidTerminate={retry}
@@ -264,7 +264,7 @@ function Main() {
               ]}
             />
           </Animated.View>
-          {showStatus && <StatusScreen type={showStatus} detail={errorDetail} onRetry={retry} />}
+          {showStatus && <StatusScreen type={showStatus} onRetry={retry} />}
         </View>
       </View>
       {splashMounted && <SplashOverlay visible={splashVisible} onHidden={() => setSplashMounted(false)} />}

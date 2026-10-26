@@ -17,6 +17,11 @@ const MESSAGES = {
     title: 'Server is unavailable',
     body: 'Sahitya Rachna is having trouble right now. Please try again in a moment.',
   },
+  ssl: {
+    emoji: '🔒',
+    title: 'Secure connection problem',
+    body: 'We could not make a secure connection. Please check that your phone date and time are correct, then try again.',
+  },
   generic: {
     emoji: '⚠️',
     title: 'Something went wrong',
@@ -24,14 +29,13 @@ const MESSAGES = {
   },
 };
 
-export default function StatusScreen({ type = 'generic', detail, onRetry }) {
+export default function StatusScreen({ type = 'generic', onRetry }) {
   const m = MESSAGES[type] ?? MESSAGES.generic;
   return (
     <View style={styles.root}>
       <Text style={styles.emoji}>{m.emoji}</Text>
       <Text style={styles.title}>{m.title}</Text>
       <Text style={styles.body}>{m.body}</Text>
-      {type === 'generic' && !!detail && <Text style={styles.detail}>{detail}</Text>}
       <Pressable
         onPress={onRetry}
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}
@@ -56,7 +60,6 @@ const styles = StyleSheet.create({
   emoji: { fontSize: 56, marginBottom: 16 },
   title: { fontSize: 20, fontWeight: '700', color: COLORS.text, marginBottom: 8, textAlign: 'center' },
   body: { fontSize: 15, lineHeight: 22, color: COLORS.muted, textAlign: 'center', marginBottom: 28 },
-  detail: { fontSize: 11, color: COLORS.muted, textAlign: 'center', marginBottom: 20, opacity: 0.7 },
   button: { backgroundColor: COLORS.primary, paddingHorizontal: 36, paddingVertical: 13, borderRadius: 28 },
   pressed: { opacity: 0.8 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },

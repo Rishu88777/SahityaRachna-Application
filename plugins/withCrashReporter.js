@@ -53,12 +53,11 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
 
 class CrashActivity : Activity() {
@@ -68,38 +67,37 @@ class CrashActivity : Activity() {
     val pad = (16 * resources.displayMetrics.density).toInt()
 
     val title = TextView(this).apply {
-      text = "Sahitya Rachna crashed"
+      text = "Sahitya Rachna stopped unexpectedly"
       textSize = 20f
       setTextColor(Color.BLACK)
     }
     val hint = TextView(this).apply {
-      text = "Please send a screenshot of this screen to the developer."
+      text = "Sorry about that. Please reopen the app. If this keeps happening, tap Copy details and send them to the developer."
       setTextColor(Color.DKGRAY)
       setPadding(0, pad / 2, 0, pad / 2)
     }
-    val body = TextView(this).apply {
-      text = report
-      textSize = 11f
-      setTextColor(Color.BLACK)
-      setTextIsSelectable(true)
-    }
     val copy = Button(this).apply {
-      text = "Copy"
+      text = "Copy details"
       setOnClickListener {
         (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
           .setPrimaryClip(ClipData.newPlainText("crash", report))
       }
     }
-    val close = Button(this).apply {
-      text = "Close"
-      setOnClickListener { finishAndRemoveTask() }
+    val reopen = Button(this).apply {
+      text = "Reopen app"
+      setOnClickListener {
+        packageManager.getLaunchIntentForPackage(packageName)?.let {
+          it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+          startActivity(it)
+        }
+        finishAndRemoveTask()
+      }
     }
     val buttons = LinearLayout(this).apply {
       orientation = LinearLayout.HORIZONTAL
       addView(copy)
-      addView(close)
+      addView(reopen)
     }
-    val scroll = ScrollView(this).apply { addView(body) }
     setContentView(LinearLayout(this).apply {
       orientation = LinearLayout.VERTICAL
       setBackgroundColor(Color.WHITE)
@@ -107,7 +105,6 @@ class CrashActivity : Activity() {
       addView(title)
       addView(hint)
       addView(buttons)
-      addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
     })
   }
 }

@@ -5,7 +5,7 @@ import { COLORS } from './config';
 // Last line of defence: a JavaScript error anywhere in the app shows this screen
 // (with the error text, so it can be reported) instead of closing the app.
 export default class ErrorBoundary extends Component {
-  state = { error: null };
+  state = { error: null, showDetails: false };
 
   static getDerivedStateFromError(error) {
     return { error };
@@ -17,13 +17,18 @@ export default class ErrorBoundary extends Component {
     return (
       <View style={styles.root}>
         <Text style={styles.title}>Something went wrong</Text>
-        <Text style={styles.body}>The app hit an unexpected error. Tap below to restart it.</Text>
+        <Text style={styles.body}>Sorry about that. Tap below to restart the app.</Text>
         <Pressable style={styles.button} onPress={() => this.setState({ error: null })}>
           <Text style={styles.buttonText}>Restart</Text>
         </Pressable>
-        <ScrollView style={styles.log}>
-          <Text style={styles.logText}>{String(error?.stack || error?.message || error)}</Text>
-        </ScrollView>
+        <Pressable onPress={() => this.setState((s) => ({ showDetails: !s.showDetails }))}>
+          <Text style={styles.link}>{this.state.showDetails ? 'Hide details' : 'Show details'}</Text>
+        </Pressable>
+        {this.state.showDetails && (
+          <ScrollView style={styles.log}>
+            <Text style={styles.logText}>{String(error?.stack || error?.message || error)}</Text>
+          </ScrollView>
+        )}
       </View>
     );
   }
@@ -35,6 +40,7 @@ const styles = StyleSheet.create({
   body: { fontSize: 15, color: COLORS.muted, textAlign: 'center', marginBottom: 20 },
   button: { backgroundColor: COLORS.primary, paddingHorizontal: 36, paddingVertical: 13, borderRadius: 28 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  link: { marginTop: 22, color: COLORS.muted, fontSize: 13, textDecorationLine: 'underline' },
   log: { marginTop: 24, alignSelf: 'stretch' },
   logText: { fontSize: 11, color: COLORS.muted },
 });

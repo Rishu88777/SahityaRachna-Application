@@ -222,7 +222,8 @@ function Main() {
             key={webKey}
             ref={webRef}
             source={{ uri: SITE_URL }}
-            style={styles.flex}
+            style={[styles.flex, !!error && styles.hidden]}
+            renderError={() => <View style={styles.flex} />}
             originWhitelist={['*']}
             onShouldStartLoadWithRequest={onShouldStart}
             onNavigationStateChange={(nav) => {
@@ -284,6 +285,7 @@ export default function App() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.background },
   flex: { flex: 1 },
+  hidden: { opacity: 0 },
   barTrack: { position: 'absolute', top: 0, left: 0, right: 0, height: 3, zIndex: 4 },
   bar: { height: 3, backgroundColor: COLORS.primary },
 });

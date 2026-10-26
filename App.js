@@ -12,7 +12,6 @@ import {
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import NetInfo from '@react-native-community/netinfo';
 import { WebView } from 'react-native-webview';
 
 import ErrorBoundary from './src/ErrorBoundary';
@@ -36,6 +35,10 @@ const INJECTED_JS = `
   true;
 `;
 
+// Android (net::ERR_*) and iOS (NSURLErrorDomain) descriptions that mean "no usable connection".
+const OFFLINE_RE =
+  /INTERNET_DISCONNECTED|NAME_NOT_RESOLVED|NETWORK_CHANGED|CONNECTION_(REFUSED|RESET|CLOSED|TIMED_OUT)|ADDRESS_UNREACHABLE|not connected to the internet|offline/i;
+
 const isInternal = (url) => {
   const m = /^https?:\/\/([^/:?#]+)/i.exec(url || '');
   if (!m) return false;
@@ -57,11 +60,9 @@ function Main() {
   const firstLoadSettled = useRef(false);
   const hasLoaded = useRef(false);
   const currentUrl = useRef(SITE_URL);
-  const onlineRef = useRef(true);
   const errorRef = useRef(null);
 
-  const [online, setOnline] = useState(true);
-  const [error, setError] = useState(null); // null | 'timeout' | 'server' | 'generic'
+  const [error, setError] = useState(null); // null | 'offline' | 'timeout' | 'server' | 'generic'
   const [splashVisible, setSplashVisible] = useState(true);
   const [splashMounted, setSplashMounted] = useState(true);
   const [webKey, setWebKey] = useState(0);
@@ -113,23 +114,32 @@ function Main() {
     else setWebKey((k) => k + 1);
   }, []);
 
-  // Connectivity: show the offline screen right away, reload automatically on return.
+  // While an error screen is up, quietly probe the site and reload as soon as it answers.
   useEffect(() => {
-    let unsubscribe = () => {};
-    try {
-      unsubscribe = NetInfo.addEventListener((state) => {
-        const isOnline = state.isConnected !== false && state.isInternetReachable !== false;
-        const wasOnline = onlineRef.current;
-        onlineRef.current = isOnline;
-        setOnline(isOnline);
-        if (!isOnline) settleFirstLoad();
-        else if (!wasOnline && (errorRef.current || !hasLoaded.current)) retry();
-      });
-    } catch {
-      // Connectivity info is a nicety; the WebView's own error handling still works without it.
-    }
-    return unsubscribe;
-  }, [retry, settleFirstLoad]);
+    if (!error) return;
+    let stopped = false;
+    const probe = async () => {
+      const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+      const timer = setTimeout(() => ctl && ctl.abort(), 6000);
+      try {
+        const res = await fetch(SITE_URL, {
+          method: 'HEAD',
+          cache: 'no-store',
+          signal: ctl ? ctl.signal : undefined,
+        });
+        if (!stopped && res.status < 500) retry();
+      } catch {
+        // still unreachable; try again on the next tick
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+    const id = setInterval(probe, 4000);
+    return () => {
+      stopped = true;
+      clearInterval(id);
+    };
+  }, [error, retry]);
 
   // Android hardware back: navigate web history, then press twice to exit.
   useEffect(() => {
@@ -192,9 +202,7 @@ function Main() {
     return false;
   };
 
-  // Offline only blocks the screen before the first page has loaded or after a failed load;
-  // otherwise the user keeps reading the page they already have.
-  const showStatus = error ? (online ? error : 'offline') : !online && !hasLoaded.current ? 'offline' : null;
+  const showStatus = error;
 
   return (
     <View style={styles.root}>
@@ -215,7 +223,9 @@ function Main() {
             onLoadProgress={onLoadProgress}
             onLoad={onLoad}
             onLoadEnd={onLoadEnd}
-            onError={() => fail(onlineRef.current ? 'generic' : 'offline')}
+            onError={({ nativeEvent }) =>
+              fail(OFFLINE_RE.test(nativeEvent?.description || '') ? 'offline' : 'generic')
+            }
             onHttpError={onHttpError}
             onRenderProcessGone={retry}
             onContentProcessDidTerminate={retry}

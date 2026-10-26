@@ -1,0 +1,16 @@
+export const SITE_URL = 'https://sahityarachana.org';
+export const SITE_HOST = 'sahityarachana.org';
+
+export const COLORS = {
+  background: '#FFFFFF',
+  splash: '#FDF1E8',
+  primary: '#FF9800',
+  accent: '#2196F3',
+  text: '#2B2B2B',
+  muted: '#7A7A7A',
+};
+
+// Give up on a page that has not finished loading after this long.
+export const LOAD_TIMEOUT_MS = 30000;
+// Minimum time the animated splash stays up so it never just flashes.
+export const MIN_SPLASH_MS = 1600;

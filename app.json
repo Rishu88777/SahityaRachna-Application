@@ -3,7 +3,7 @@
     "name": "Sahitya Rachna",
     "slug": "sahitya-rachna",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#FFFFFF",
@@ -49,7 +49,7 @@
               "armeabi-v7a",
               "x86_64"
             ],
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": false
           }
         }
       ],

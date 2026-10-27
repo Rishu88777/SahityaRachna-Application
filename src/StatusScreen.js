@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { COLORS } from './config';
 
 const MESSAGES = {
@@ -32,7 +32,11 @@ const MESSAGES = {
 export default function StatusScreen({ type = 'generic', onRetry }) {
   const m = MESSAGES[type] ?? MESSAGES.generic;
   return (
-    <View style={styles.root}>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       <Text style={styles.emoji}>{m.emoji}</Text>
       <Text style={styles.title}>{m.title}</Text>
       <Text style={styles.body}>{m.body}</Text>
@@ -43,7 +47,7 @@ export default function StatusScreen({ type = 'generic', onRetry }) {
       >
         <Text style={styles.buttonText}>Try again</Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -51,11 +55,18 @@ const styles = StyleSheet.create({
   root: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: COLORS.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
     zIndex: 20,
     elevation: 20,
+  },
+  // Centered, width-capped column: reads well on tablets and scrolls in short landscape windows.
+  content: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 520,
+    padding: 32,
   },
   emoji: { fontSize: 56, marginBottom: 16 },
   title: { fontSize: 20, fontWeight: '700', color: COLORS.text, marginBottom: 8, textAlign: 'center' },

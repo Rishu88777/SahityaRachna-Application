@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, Dimensions, Easing, Image, StyleSheet, View } from 'react-native';
+import { Animated, Easing, StyleSheet, useWindowDimensions } from 'react-native';
 import { COLORS } from './config';
 
-const { width: W, height: H } = Dimensions.get('window');
-// Matches the native splash image width so the hand-off from native to JS has no jump.
-const LOGO_W = 200;
-const LOGO_H = Math.round((LOGO_W * 334) / 600);
+// 200 matches the native splash image width on phones so the hand-off has no jump;
+// on tablets the logo grows with the shorter screen side (capped) so it never looks tiny.
+const logoWidth = (w, h) => Math.round(Math.min(Math.max(200, Math.min(w, h) * 0.42), 340));
 
 const BUBBLES = [
   { x: 0.12, size: 46, color: COLORS.primary, delay: 0, dur: 5200 },
@@ -25,7 +24,7 @@ const loop = (anim, duration, easing = Easing.inOut(Easing.sin)) =>
     ]),
   );
 
-function Bubble({ x, size, color, delay, dur }) {
+function Bubble({ x, size, color, delay, dur, W, H }) {
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const a = Animated.loop(
@@ -93,6 +92,9 @@ function Dot({ color, index }) {
 
 // Full-screen overlay that fades out once `visible` turns false.
 export default function SplashOverlay({ visible, onHidden }) {
+  const { width: W, height: H } = useWindowDimensions();
+  const LOGO_W = logoWidth(W, H);
+  const LOGO_H = Math.round((LOGO_W * 334) / 600);
   const exit = useRef(new Animated.Value(0)).current; // 0 = showing, 1 = gone
   const drift = useRef(new Animated.Value(0)).current; // background pan/zoom
   const pop = useRef(new Animated.Value(0)).current; // logo entrance bounce
@@ -128,7 +130,7 @@ export default function SplashOverlay({ visible, onHidden }) {
     }).start(({ finished }) => finished && onHidden());
   }, [visible, exit, onHidden]);
 
-  const bubbles = useMemo(() => BUBBLES.map((b, i) => <Bubble key={i} {...b} />), []);
+  const bubbles = useMemo(() => BUBBLES.map((b, i) => <Bubble key={i} {...b} W={W} H={H} />), [W, H]);
 
   return (
     <Animated.View
